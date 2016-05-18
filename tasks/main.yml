@@ -1,0 +1,22 @@
+---
+
+- name: ensure perl-Crypt-SSLeay present
+  yum: name=perl-Crypt-SSLeay state=present
+
+- name: set hostname
+  hostname: name="{{ fqdn }}"
+
+- name: set fqdn
+  lineinfile: dest=/etc/hosts regexp='.*{{ item }}$' line="{{ hostvars[item].ansible_default_ipv4.address }} {{item}}" state=present
+  when: hostvars[item].ansible_default_ipv4.address is defined
+  with_items: " {{ groups['all'] }}"
+
+- name: copy modified install script
+  copy: src=install.sh dest=/root/install.sh
+
+- name: virtualmin install executable
+  file: path=/root/install.sh mode=0755
+
+- name: virtualmin install (~10 mins) track via $ sudo tail -f /root/virtualmin-install.log
+  shell: ~/install.sh --yes chdir=/root creates=/root/virtualmin-install.log
+
